@@ -1,0 +1,74 @@
+version: "3.9"
+
+services:
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    volumes:
+      - ./loki/config.yml:/etc/loki/config.yml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/config.yml
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    user: root
+    container_name: promtail
+    volumes:
+      - ./promtail/config.yml:/etc/promtail/config.yml
+      - /var/log/journal:/var/log/journal:ro
+      - /etc/machine-id:/etc/machine-id:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: grafana
+    ports:
+      - "127.0.0.1:3102:3000"
+    environment:
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - loki
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    ports:
+      - "3103:9090"
+
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    pid: host
+
+  blackbox_exporter:
+    image: prom/blackbox-exporter:latest
+    container_name: blackbox_exporter
+    volumes:
+      - ./blackbox/config.yml:/etc/blackbox_exporter/config.yml
+    command:
+      - --config.file=/etc/blackbox_exporter/config.yml
+
+  nginx_exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx_exporter
+    command:
+      - -nginx.scrape-uri=http://172.17.0.1/nginx_status
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  loki_data:
+  grafana_data:
+  prometheus_data:
