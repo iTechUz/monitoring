@@ -50,7 +50,7 @@ PostgreSQL and Redis targets are off (`[]`) in `prometheus/exporters/<name>.yml`
 | `TELEGRAM_MENTIONS`, `TELEGRAM_MENTIONS_<CATEGORY>` | Telegram usernames tagged on P1/P2 alerts, e.g. `@user1 @user2`. The per-category one overrides the default for that topic. |
 | `PUBLIC_IP`, `ALLOWED_PUBLIC_PORTS` | Open-port check (port-watch): every port listening on all interfaces is tried on the public IP; one that answers and is not allowed (default `22,80,443`) fires PortExposed. Catches Docker-published ports that bypass ufw. Empty IP = detected automatically (AWS metadata, else ifconfig.me); `off` = ports are only listed. |
 | `GRAFANA_URL`, `PROMETHEUS_URL`, `ALERTMANAGER_URL` | Public addresses used only for links in Telegram messages (Dashboard, Logs, Query). On a server, put its IP or domain here, not `localhost`, or the links will not open from a phone. |
-| `GRAFANA_HOST` | IP Grafana binds to: `0.0.0.0` every interface, `127.0.0.1` this machine only. |
+| `GRAFANA_HOST` | IP Grafana binds to: `127.0.0.1` this machine only (default), `0.0.0.0` every interface. All other ports always bind to `127.0.0.1`. |
 | `GRAFANA_PORT`, `GRAFANA_DIRECT_PORT` | Main UI (themed proxy, default `3000`) and plain Grafana (default `3002`). Keep `GRAFANA_URL` in sync. |
 | `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD` | Grafana login. Change the password before exposing it. |
 | `POSTGRES_EXPORTER_DSN` | PostgreSQL to watch (profile `postgres`), then switch on `prometheus/exporters/postgres.yml`. |

@@ -24,7 +24,7 @@ services:  # containers this file runs; each key below is one service
       - -vmalert.proxyURL=http://vmalert:8880  # serve vmalert's rules and alerts on /api/v1/rules: Grafana Alerting lists them
     volumes:  # named volumes; data here survives `docker compose down`
       - vm-data:/storage            # named volume: survives `docker compose down`
-    ports: ["38428:8428"]            # API + VMUI at http://localhost:38428/vmui
+    ports: ["127.0.0.1:38428:8428"]            # API + VMUI at http://localhost:38428/vmui
 
   # Scrapes every exporter on a schedule, evaluates alert rules and forwards data to VictoriaMetrics.
   prometheus:  # metrics collector + alert rules
@@ -48,7 +48,7 @@ services:  # containers this file runs; each key below is one service
       - ./prometheus:/etc/prometheus:ro  # config directory from this repo, read-only
       - prometheus-data:/prometheus  # persistent data at /prometheus
       - auto-targets:/etc/prometheus-auto:ro  # targets found by the discoverer service (outside /etc/prometheus: that mount is read-only)
-    ports: ["39090:9090"]            # UI: http://localhost:39090 (targets: /targets, alerts: /alerts)
+    ports: ["127.0.0.1:39090:9090"]            # UI: http://localhost:39090 (targets: /targets, alerts: /alerts)
     # Lets prometheus/exporters/apps.yml reach apps running on the Docker host as host.docker.internal
     # (Docker Desktop has this name built in; on Linux this line adds it).
     extra_hosts: ["host.docker.internal:host-gateway"]  # host IP alias for scraping host apps
@@ -64,7 +64,7 @@ services:  # containers this file runs; each key below is one service
     command: ["--path.rootfs=/host"]  # read filesystems, /proc and /sys of the host through /host
     volumes:
       - /:/host:ro                   # host root, read-only (on a Linux server add ,rslave to see later mounts)
-    ports: ["39100:9100"]            # raw metrics: http://localhost:39100/metrics
+    ports: ["127.0.0.1:39100:9100"]            # raw metrics: http://localhost:39100/metrics
 
   # Open ports: lists every TCP listener on the host and checks which ones the internet can reach
   # through PUBLIC_IP (alert PortExposed). Host network + PID namespace to see all listeners and their
@@ -106,7 +106,7 @@ services:  # containers this file runs; each key below is one service
       - /dev/disk/:/dev/disk:ro     # disk I/O per container
     devices:  # host devices passed into the container
       - /dev/kmsg                   # kernel messages, used to detect OOM kills
-    ports: ["38080:8080"]            # UI: http://localhost:38080
+    ports: ["127.0.0.1:38080:8080"]            # UI: http://localhost:38080
 
   # Probes websites from the outside (is it up, how fast, when does the SSL cert expire).
   # The list of sites lives in prometheus/sites.yml, not here.
@@ -120,7 +120,7 @@ services:  # containers this file runs; each key below is one service
       - ./blackbox/blackbox.yml:/etc/blackbox/blackbox.yml:ro  # probe modules config
     # Lets the non-root blackbox user send ping (ICMP datagram sockets) without NET_RAW/root.
     sysctls: { net.ipv4.ping_group_range: "0 2147483647" }  # every group id may open ping sockets
-    ports: ["39115:9115"]            # manual probe: http://localhost:39115/probe?module=http_2xx&target=https://google.com
+    ports: ["127.0.0.1:39115:9115"]            # manual probe: http://localhost:39115/probe?module=http_2xx&target=https://google.com
 
   # Inbox for metrics from short-lived jobs (cron, backups, migrations). The job pushes its result
   # at the end; Prometheus scrapes it from here. Example push from a backup script:
@@ -134,7 +134,7 @@ services:  # containers this file runs; each key below is one service
       - --persistence.interval=1m  # save to disk this often
     volumes:  # named volumes; data here survives `docker compose down`
       - pushgateway-data:/data  # persistent data at /data
-    ports: ["39091:9091"]            # UI + push API: http://localhost:39091
+    ports: ["127.0.0.1:39091:9091"]            # UI + push API: http://localhost:39091
 
   # Auto-discovery of app metrics: finds every container on this Docker host (any compose
   # project) that serves Prometheus metrics, connects Prometheus and blackbox to its network
@@ -254,7 +254,7 @@ services:  # containers this file runs; each key below is one service
     environment:  # environment variables inside the container
       - REDIS_ADDR=${REDIS_EXPORTER_ADDR:-redis://redis:6379}  # Redis URL
       - REDIS_PASSWORD=${REDIS_EXPORTER_PASSWORD:-}  # empty = no auth
-    ports: ["39121:9121"]            # raw metrics: http://localhost:39121/metrics
+    ports: ["127.0.0.1:39121:9121"]            # raw metrics: http://localhost:39121/metrics
 
   # Receives alerts from Prometheus, groups/deduplicates them and sends them to Telegram.
   alertmanager:  # alert router and Telegram sender
@@ -292,7 +292,7 @@ services:  # containers this file runs; each key below is one service
     volumes:  # named volumes; data here survives `docker compose down`
       - ./alertmanager:/etc/alertmanager:ro  # config directory from this repo, read-only
       - alertmanager-data:/alertmanager   # silences and notification log survive restarts
-    ports: ["39093:9093"]            # UI: http://localhost:39093 (create silences here)
+    ports: ["127.0.0.1:39093:9093"]            # UI: http://localhost:39093 (create silences here)
 
   # Dashboards, plus its own alert rules that watch the rest of the stack (dead man's switch).
   grafana:  # dashboards UI + dead man's switch
@@ -326,7 +326,7 @@ services:  # containers this file runs; each key below is one service
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro   # dashboard JSON files
       - grafana-data:/var/lib/grafana                         # users, settings, alert state (SQLite)
     # Main entry is grafana-proxy on :3000 (themed). This port is plain Grafana, for debugging.
-    ports: ["${GRAFANA_HOST:-0.0.0.0}:${GRAFANA_DIRECT_PORT:-33002}:3000"]  # plain UI: http://<GRAFANA_HOST>:<GRAFANA_DIRECT_PORT>
+    ports: ["${GRAFANA_HOST:-127.0.0.1}:${GRAFANA_DIRECT_PORT:-33002}:3000"]  # plain UI: http://<GRAFANA_HOST>:<GRAFANA_DIRECT_PORT>
     depends_on: [victoriametrics, victorialogs, tempo]  # start after victoriametrics, victorialogs, tempo (start order only, not readiness)
 
   # Grafana with a custom look (background gradient, translucent panels): http://localhost:33000
@@ -339,7 +339,7 @@ services:  # containers this file runs; each key below is one service
     volumes:  # config from this repo, read-only
       - ./grafana-proxy/nginx.conf:/etc/nginx/nginx.conf:ro  # proxy + stylesheet injection
       - ./grafana-proxy/theme:/etc/nginx/theme:ro  # theme.css; edits apply on browser reload
-    ports: ["${GRAFANA_HOST:-0.0.0.0}:${GRAFANA_PORT:-33000}:80"]  # UI: http://<GRAFANA_HOST>:<GRAFANA_PORT>
+    ports: ["${GRAFANA_HOST:-127.0.0.1}:${GRAFANA_PORT:-33000}:80"]  # UI: http://<GRAFANA_HOST>:<GRAFANA_PORT>
     depends_on: [grafana]  # start after grafana (start order only, not readiness)
 
   # ── Logs ────────────────────────────────────────────────────────────────────
@@ -359,7 +359,7 @@ services:  # containers this file runs; each key below is one service
       - -retention.maxDiskSpaceUsageBytes=20GiB  # disk cap; oldest days deleted when exceeded
     volumes:  # named volumes; data here survives `docker compose down`
       - vlogs-data:/vlogs  # persistent data at /vlogs
-    ports: ["39428:9428"]            # UI: http://localhost:39428/select/vmui
+    ports: ["127.0.0.1:39428:9428"]            # UI: http://localhost:39428/select/vmui
 
   # HTTP metrics + traces of apps without touching their code (eBPF). Linux only, kernel 5.8+.
   # Which ports/apps to watch: beyla/beyla.yml. Starts with plain `docker compose up -d`.
@@ -397,12 +397,12 @@ services:  # containers this file runs; each key below is one service
       # - /run/log/journal:/run/log/journal:ro         # volatile journal
       # - /etc/machine-id:/etc/machine-id:ro           # journal files are stored per machine id
     ports:  # host:container
-      - "38686:8686"  # API: http://localhost:38686/health
-      - "39598:9598"  # /metrics: log-derived metrics + Vector's own health (Prometheus job vector)
+      - "127.0.0.1:38686:8686"  # API: http://localhost:38686/health
+      - "127.0.0.1:39598:9598"  # /metrics: log-derived metrics + Vector's own health (Prometheus job vector)
       # OpenTelemetry: traces, metrics and logs from any app with an OTel SDK (vector/vector.yaml §8).
-      # Same compose network: http://vector:4318. Other host/project: http://<host>:34318 (gRPC <host>:34317).
-      - "34317:4317"    # OTLP gRPC
-      - "34318:4318"    # OTLP HTTP (default protocol of most SDKs)
+      # Same compose network: http://vector:4318. Same host only: http://localhost:34318 (gRPC localhost:34317).
+      - "127.0.0.1:34317:4317"    # OTLP gRPC
+      - "127.0.0.1:34318:4318"    # OTLP HTTP (default protocol of most SDKs)
     depends_on: [victorialogs, tempo, prometheus]  # start after victorialogs, tempo, prometheus (start order only, not readiness)
 
   # ── Traces ──────────────────────────────────────────────────────────────────
@@ -422,7 +422,7 @@ services:  # containers this file runs; each key below is one service
     volumes:  # named volumes; data here survives `docker compose down`
       - ./tempo:/etc/tempo:ro  # config directory from this repo, read-only
       - tempo-data:/var/tempo  # trace blocks, WAL, generator WAL
-    ports: ["33200:3200"]            # API: http://localhost:33200/ready, /metrics
+    ports: ["127.0.0.1:33200:3200"]            # API: http://localhost:33200/ready, /metrics
     depends_on: [prometheus]  # start after prometheus (start order only, not readiness)
 
   # Evaluates log alert rules (LogsQL) against VictoriaLogs and sends firing alerts to
@@ -448,7 +448,7 @@ services:  # containers this file runs; each key below is one service
     volumes:  # config from this repo, read-only
       - ./vmalert:/etc/vmalert:ro  # log rules
       - ./prometheus/rules:/etc/vmalert-metrics:ro  # metric rules (outside /etc/vmalert: that mount is read-only)
-    ports: ["38880:8880"]            # UI: http://localhost:38880 (rules, alerts, last evaluations)
+    ports: ["127.0.0.1:38880:8880"]            # UI: http://localhost:38880 (rules, alerts, last evaluations)
     depends_on: [vmauth, alertmanager]  # start order only, not readiness
 
   # Routes vmalert's queries: /select/logsql → VictoriaLogs, the rest → VictoriaMetrics.
