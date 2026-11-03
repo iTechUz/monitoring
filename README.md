@@ -201,7 +201,7 @@ history matters to you.
 | Probe SLO — 99.9% of blackbox probes, certificate expiry (`SslExpiresSoon` at 14 days, `SslExpiresCritical` at 3) | dashboard **SLO** & SLO** |
 | Disk forecast — `DiskWillFillIn24h` / `DiskWillFillIn4h` (`predict_linear`), hours-until-full panel | dashboard **Server Overview** (Disks) |
 | Redis, PostgreSQL | dashboards **Redis**, **PostgreSQL** |
-| One project, one container | **Docker Projects → Project → Container** (or the type dashboard: App Endpoints, Frontend, Queue, Worker, Proxy, Search, NoSQL, Storage, Cron) |
+| One project, one container | **Docker Projects → Project → Container** (or the type dashboard: App Endpoints, Frontend, Queue, Proxy, Search, NoSQL, Storage, Cron) |
 | Language runtime (Go, Java, Node, Python, PHP, .NET, Rust, Ruby) | dashboards **Runtime: <language>** |
 
 Every dashboard marks events on its graphs: container (re)starts, a container running a new image (deploy or rollback), and deploys you post yourself:
@@ -286,7 +286,6 @@ services:
 | `db` | **PostgreSQL** (other databases: **Container**) |
 | `cache` | **Redis** |
 | `storage` | **Storage** (MinIO): capacity and forecast, S3 requests, errors, latency |
-| `worker` | **Worker**: jobs done/failed, backlog, retries, job time (asynq, Celery, Sidekiq, BullMQ) + log-based view |
 | `monitoring` | **Self Monitoring** (the stack's own services) |
 | anything else (`mail`, `exporter`, `loadgen`, ...) | **Container**: status, restarts, CPU, memory vs limit, network, disk, logs |
 

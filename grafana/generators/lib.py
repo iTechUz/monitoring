@@ -256,9 +256,9 @@ CONTAINER_LABELS = ("type", "lang", "team", "env")  # container.* Docker labels 
 
 # container.type → dashboard uid. Regexes match "<type>|<image>", so db can pick PostgreSQL or MySQL from the image.
 TYPE_ROUTES = [("endpoints", "(backend|service|api)"), ("postgres", "db\\\\|.*postgres.*"),
-               ("redis", "cache"), ("storage", "storage"), ("worker", "worker"), ("self", "monitoring")]
+               ("redis", "cache"), ("storage", "storage"), ("self", "monitoring")]
 DASH_NAMES = {"container": "Container", "endpoints": "App Endpoints", "postgres": "PostgreSQL",
-              "redis": "Redis", "storage": "Storage", "worker": "Worker", "self": "Self Monitoring"}
+              "redis": "Redis", "storage": "Storage", "self": "Self Monitoring"}
 
 
 def R(e, dst, rep, src, rx):
